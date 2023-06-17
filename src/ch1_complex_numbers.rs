@@ -1,17 +1,56 @@
-use std::ops;
-/* Programming Drill 1.1.1: Write a program that takes two complex numbers and returns their sum and product. */
+use std::{ops, f64::consts::PI};
+
+macro_rules! round_2_dec_places {
+    ($a:expr) => {
+        ($a * 100.0_f64).round() / 100.0_f64
+    };
+}
+
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct Complex {
     real : f64,
     imaginary : f64,
+    is_cartesian : bool,
 }
 
 impl Complex {
     pub fn new(r : f64, i : f64) -> Complex {
         Complex {
             real: r,
-            imaginary: i
+            imaginary: i,
+            is_cartesian: true,
         }
+    }
+
+    pub fn new_polar(rho : f64, theta : f64) -> Complex {
+        Complex {
+            real: rho,
+            imaginary: theta,
+            is_cartesian: false,
+        }
+    }
+
+    pub fn to_polar(&self) -> Complex {
+        if !self.is_cartesian {
+            return self.clone();
+        }
+
+        let theta = (self.imaginary / self.real).atan();
+        let rho = self.imaginary / theta.sin();
+
+        Complex::new_polar(rho, theta)
+    }
+
+    pub fn to_cartesian(&self) -> Complex {
+        if self.is_cartesian {
+            return self.clone();
+        }
+
+        let r = self.imaginary.cos() * self.real;
+        let i = self.imaginary.sin() * self.real;
+
+        Complex::new(r , i)
     }
 
     pub fn modulus(&self) -> f64 {
@@ -122,4 +161,22 @@ fn test_conjugate() {
 
     assert_eq!(conj.real, c.real);
     assert_eq!(conj.imaginary, -1.0*c.imaginary);
+}
+
+#[test]
+fn test_to_polar() {
+    let cart = Complex::new(1.0, 1.0);
+    let polar = cart.to_polar();
+
+    assert_eq!(polar.real, 2.0_f64.sqrt());
+    assert_eq!(polar.imaginary, PI/4.0_f64);
+}
+
+#[test]
+fn test_to_cartesian() {
+    let polar = Complex::new_polar(3.0, PI / 3.0_f64);
+    let cart = polar.to_cartesian();
+
+    assert_eq!(round_2_dec_places!(cart.real), 1.5);
+    assert_eq!(cart.imaginary, (PI/3.0_f64).sin() * 3.0);
 }
